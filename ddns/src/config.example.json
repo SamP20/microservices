@@ -1,0 +1,15 @@
+{
+    "service_name": "ddns",
+    "ddns": {
+        "password": "my secret password",
+        "host": "@",
+        "domain": "example.com",
+        "url": "https://dynamicdns.park-your-domain.com/update"
+    },
+    "amqp": {
+        "host": "rabbitmq",
+        "port": 5672,
+        "login": "guest",
+        "password": "guest"
+    }
+}

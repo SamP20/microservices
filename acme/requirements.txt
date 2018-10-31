@@ -1,0 +1,4 @@
+aio-pika
+msgpack
+aiohttp
+cryptography

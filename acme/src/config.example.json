@@ -1,0 +1,9 @@
+{
+    "service_name": "acme",
+    "amqp": {
+        "host": "rabbitmq",
+        "port": 5672,
+        "login": "guest",
+        "password": "guest"
+    }
+}

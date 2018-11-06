@@ -23,6 +23,7 @@ import msgpack
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from samp20.asyncservice.amqp import decode
 
 
 class AcmeException(Exception):
@@ -38,7 +39,7 @@ class AcmeService:
     def __init__(
         self,
         amqp,
-        cert_folder
+        cert_folder,
         keyfile,
         verifiers,
         days_before_renewal=10,
@@ -58,7 +59,7 @@ class AcmeService:
         self.verifiers = []
         for verifier in verifiers:
             if verifier["type"] == "http-01":
-                self.verifiers.append(HttpVerifier(verifier))
+                self.verifiers.append(HttpVerifier(**verifier))
 
         self.pending_certs = set()
 
@@ -72,7 +73,7 @@ class AcmeService:
             type=aio_pika.ExchangeType.TOPIC,
             durable=True,
         )
-        await queue.bind(exchange, routing_key="cert.renew.request")
+        await queue.bind(self.exchange, routing_key="cert.renew.request")
         #TODO bind and allow certificate invalidation
         await queue.consume(self.on_message)
 
@@ -92,10 +93,10 @@ class AcmeService:
 
     async def on_message(self, message: aio_pika.IncomingMessage):
         with message.process():
-            data = msgpack.unpackb(message.body, raw=False)
+            data = decode(message)
             if "certs" in data:
                 for name, domains in data["certs"]:
-                    await create_new_cert(name, domains, 10)
+                    await self.create_new_cert(name, domains, 10)
 
     async def create_new_cert(self, cert_name, domains, check_remaining_days=None):
         if cert_name in self.pending_certs:
@@ -169,8 +170,12 @@ class AcmeService:
                         'certs': {cert_name: domains}
                     }, use_bin_type=True)
                     await self.exchange.publish(
-                        aio_pika.Message(body=data, delivery_mode=aio_pika.DeliveryMode.PERSISTENT),
-                        routing_key="cert.renew.complete",
+                        aio_pika.Message(
+                            body=data,
+                            delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                            content_encoding="application/msgpack"
+                        ),
+                        routing_key="cert.renew.complete"
                     )
             else:
                 pass  # something went wrong with the order

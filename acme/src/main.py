@@ -1,6 +1,5 @@
+import sys
 import json
-import argparse
-import asyncio
 import logging
 from samp20.asyncservice import run
 from samp20.asyncservice.logger import DictFormatter
@@ -20,7 +19,7 @@ def main():
     amqpLogger = AmqpLogHandler(service=amqpService, client_name=service_name)
     acmeService = AcmeService(**config["acme"])
 
-    run(amqpService, amqpLogger)
+    run(amqpService, amqpLogger, acmeService)
 
 
 if __name__ == "__main__":

@@ -5,5 +5,14 @@
         "port": 5672,
         "login": "guest",
         "password": "guest"
+    },
+    "acme": {
+        "cert_folder": "/data/certs",
+        "keyfile": "/data/account.key",
+        "verifiers": [
+            {
+                "type": "http-01"
+            }
+        ]
     }
 }

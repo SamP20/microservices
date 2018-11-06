@@ -5,8 +5,8 @@ import asyncio
 WELL_KNOWN = ('/', '.well-known','acme-challenge')
 
 class HttpVerifier(HttpServer):
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.pending_auths = {}
 
     async def handle_request(self, request):

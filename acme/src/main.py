@@ -17,7 +17,7 @@ def main():
 
     amqpService = AmqpService(config["amqp"])
     amqpLogger = AmqpLogHandler(service=amqpService, client_name=service_name)
-    acmeService = AcmeService(**config["acme"])
+    acmeService = AcmeService(amqpService, **config["acme"])
 
     run(amqpService, amqpLogger, acmeService)
 

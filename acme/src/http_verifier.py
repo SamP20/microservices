@@ -36,6 +36,7 @@ class HttpVerifier(HttpServer):
             key_auth = challenge.token + '.' + thumbprint
             future = asyncio.get_running_loop().create_future()
             self.pending_auths[challenge.token] = (key_auth, future)
+            await challenge.accept()
             await future
         finally:
             del self.pending_auths[challenge.token]

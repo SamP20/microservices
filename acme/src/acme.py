@@ -99,7 +99,7 @@ class AcmeService:
         with message.process():
             data = decode(message)
             if "certs" in data:
-                for name, domains in data["certs"]:
+                for name, domains in data["certs"].items():
                     await self.create_new_cert(name, domains, 10)
 
     async def create_new_cert(self, cert_name, domains, check_remaining_days=None):

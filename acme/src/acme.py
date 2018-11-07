@@ -74,7 +74,7 @@ class AcmeService:
         self.directory = await self.requst_unsigned(self.directory)
         self.account = await Account.load(self.keyfile, self)
         for verifier in self.verifiers:
-            verifier.start()
+            await verifier.start()
 
         self.channel = await self.amqp.channel()
         queue = await self.channel.declare_queue(
@@ -93,7 +93,7 @@ class AcmeService:
     async def stop(self):
         await self.http_session.close()
         for verifier in self.verifiers:
-            verifier.stop()
+            await verifier.stop()
 
     async def on_message(self, message: aio_pika.IncomingMessage):
         with message.process():

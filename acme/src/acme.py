@@ -120,7 +120,7 @@ class AcmeService:
             order = await Order.create_new(self.account, domains)
 
             if order.status == "pending":
-                log.info("Order is pending", extra={"cert": cert_name})
+                log.info("Order is pending", extra=log_extra(cert_name, order))
                 authz_tasks = []
                 for authz in order.authorizations:
                     if authz.status != "pending":
@@ -144,7 +144,7 @@ class AcmeService:
             temp_certfile = os.path.join(self.cert_folder, cert_name + ".tempcert")
 
             if order.status == "ready":
-                log.info("Order is ready", extra={"cert": cert_name})
+                log.info("Order is ready", extra=log_extra(cert_name, order))
                 cert_key = generate_rsa_key()
                 with open(temp_keyfile, "wb") as f:
                     f.write(export_private_key(cert_key))
@@ -157,7 +157,7 @@ class AcmeService:
                     await order.update()
 
             if order.status == "valid":
-                log.info("Order is valid", extra={"cert": cert_name})
+                log.info("Order is valid", extra=log_extra(cert_name, order))
                 cert = await order.download_cert()
                 with open(temp_certfile, "wb") as f:
                     f.write(cert)
@@ -184,8 +184,9 @@ class AcmeService:
                         ),
                         routing_key="cert.renew.complete"
                     )
-            else:
-                log.info("Order failed", extra={"cert": cert_name})
+
+            if order.status == "invalid":
+                log.warning("Order failed", extra=log_extra(cert_name, order))
 
         finally:
             self.pending_certs.remove(cert_name)
@@ -362,6 +363,9 @@ class Account:
     async def requst_unsigned(self, endpoint):
         return await self.service.requst_unsigned(endpoint)
 
+
+def log_extra(cert_name, order):
+    return {"cert": cert_name, "order": order.raw_data}
 
 async def check_resp(resp):
     if resp.status >= 400 and resp.status < 600:

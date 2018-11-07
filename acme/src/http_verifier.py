@@ -28,7 +28,7 @@ class HttpVerifier(HttpServer):
 
         request.url.path == WELL_KNOWN + auth['token']
 
-    async def can_process(self, challenge):
+    def can_process(self, challenge):
         return challenge.type_ == 'http-01'
 
     async def process_challenge(self, challenge, thumbprint):

@@ -120,6 +120,7 @@ class AcmeService:
             order = await Order.create_new(self.account, domains)
 
             if order.status == "pending":
+                log.info("Order is pending", extra={"cert": cert_name})
                 authz_tasks = []
                 for authz in order.authorizations:
                     if authz.status != "pending":
@@ -143,6 +144,7 @@ class AcmeService:
             temp_certfile = os.path.join(self.cert_folder, cert_name + ".tempcert")
 
             if order.status == "ready":
+                log.info("Order is ready", extra={"cert": cert_name})
                 cert_key = generate_rsa_key()
                 with open(temp_keyfile, "wb") as f:
                     f.write(export_private_key(cert_key))
@@ -155,6 +157,7 @@ class AcmeService:
                     await order.update()
 
             if order.status == "valid":
+                log.info("Order is valid", extra={"cert": cert_name})
                 cert = await order.download_cert()
                 with open(temp_certfile, "wb") as f:
                     f.write(cert)
@@ -177,7 +180,7 @@ class AcmeService:
                         aio_pika.Message(
                             body=data,
                             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-                            content_encoding="application/msgpack"
+                            content_type="application/msgpack"
                         ),
                         routing_key="cert.renew.complete"
                     )
@@ -185,7 +188,7 @@ class AcmeService:
                 pass  # something went wrong with the order
 
         finally:
-            self.pending_certs.remove(cert)
+            self.pending_certs.remove(cert_name)
 
     def load_cert(self, domain):
         cert_file = os.path.join(self.cert_folder, domain + ".cert")

@@ -25,6 +25,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from samp20.asyncservice.amqp import decode
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class AcmeException(Exception):
     def __init__(self, code, message):
@@ -346,7 +350,7 @@ class Account:
         return b64(thumbprint.finalize())
 
     async def request_signed(self, endpoint, payload):
-        self.service.log.debug("Accessing endpoint: %s", endpoint)
+        log.debug("Accessing endpoint: %s", endpoint)
         nonce = await self.service.get_nonce()
         body = sign_request(self.key, endpoint, nonce, payload, self.acct_url)
         resp = await self.service.post(endpoint, body.encode("utf-8"))

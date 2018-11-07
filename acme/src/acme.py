@@ -200,7 +200,7 @@ class AcmeService:
 
     def find_verifier(self, authz):
         for verifier in self.verifiers:
-            for challenge in authz.challenges:
+            for challenge in authz.challenges.values():
                 if verifier.can_process(challenge):
                     return verifier, challenge
         return None, None

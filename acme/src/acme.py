@@ -185,7 +185,7 @@ class AcmeService:
                         routing_key="cert.renew.complete"
                     )
             else:
-                pass  # something went wrong with the order
+                log.info("Order failed", extra={"cert": cert_name})
 
         finally:
             self.pending_certs.remove(cert_name)

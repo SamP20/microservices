@@ -131,7 +131,7 @@ class AcmeService:
                     )
                     authz_tasks.append(asyncio.create_task(coro))
                 if authz_tasks:
-                    _ = asyncio.wait(authz_tasks, timeout=10.0)
+                    _ = await asyncio.wait(authz_tasks, timeout=10.0)
                 for _ in range(5):  # Wait until order is no longer pending
                     await order.update()
                     if order.status != "pending":

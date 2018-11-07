@@ -63,6 +63,15 @@ class AcmeService:
 
         self.pending_certs = set()
 
+    async def start(self):
+        self.http_session = aiohttp.ClientSession(
+            headers={"Content-Type": "application/jose+json"}
+        )
+        self.directory = await self.requst_unsigned(self.directory)
+        self.account = await Account.load(self.keyfile, self)
+        for verifier in self.verifiers:
+            verifier.start()
+
         self.channel = await self.amqp.channel()
         queue = await self.channel.declare_queue(
             name=self.listen_queue,
@@ -76,15 +85,6 @@ class AcmeService:
         await queue.bind(self.exchange, routing_key="cert.renew.request")
         #TODO bind and allow certificate invalidation
         await queue.consume(self.on_message)
-
-    async def start(self):
-        self.http_session = aiohttp.ClientSession(
-            headers={"Content-Type": "application/jose+json"}
-        )
-        self.directory = await self.requst_unsigned(self.directory)
-        self.account = await Account.load(self.keyfile, self)
-        for verifier in self.verifiers:
-            verifier.start()
 
     async def stop(self):
         await self.http_session.close()

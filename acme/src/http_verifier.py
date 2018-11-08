@@ -21,9 +21,11 @@ class HttpVerifier(HttpServer):
         token = parts[well_known_len]
         try:
             auth = self.pending_auths[token]
-            auth[1].set_result(None)
+            if not auth[1].done():
+                auth[1].set_result(None)
             return web.Response(text=auth[0])
-        except KeyError:
+        except KeyError as e:
+            self.log.warning("Error handling request", exc_info=e)
             raise web.HTTPForbidden()
 
         request.url.path == WELL_KNOWN + auth['token']
@@ -38,5 +40,12 @@ class HttpVerifier(HttpServer):
             self.pending_auths[challenge.token] = (key_auth, future)
             await challenge.accept()
             await future
+
+            authz = challenge.authz
+            for _ in range(3):
+                await authz.update()
+                if authz.status != "processing":
+                    break
+                await asyncio.sleep(2.0)
         finally:
             del self.pending_auths[challenge.token]

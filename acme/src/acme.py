@@ -186,6 +186,8 @@ class AcmeService:
                     )
 
             if order.status == "invalid":
+                for authz in order.authorizations:
+                    await authz.update()
                 log.warning("Order failed", extra=log_extra(cert_name, order))
 
         finally:
@@ -272,7 +274,7 @@ class Order:
         self.cert_url = data.get("certificate", None)
 
     async def download_cert(self):
-        resp = await self.account.service.get_http_session().get(self.cert_url)
+        resp = await self.account.service.http_session.get(self.cert_url)
         if resp.status >= 200 and resp.status < 300:
             return await resp.read()
         else:
@@ -365,7 +367,9 @@ class Account:
 
 
 def log_extra(cert_name, order):
-    return {"cert": cert_name, "order": order.raw_data}
+    extra = {"cert": cert_name, "order": order.raw_data}
+    extra["authz"] = [authz.raw_data for authz in order.authorizations]
+    return extra
 
 async def check_resp(resp):
     if resp.status >= 400 and resp.status < 600:
